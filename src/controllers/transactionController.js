@@ -17,21 +17,30 @@ async function checkTransaction(req, res) {
     }
 
     const transaction = await solanaService.getTransaction(signature);
+    const statusDetails = await solanaService.checkTransactionStatus(signature);
     
+    // Kiểm tra xem giao dịch có tồn tại không
     if (!transaction) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Không tìm thấy giao dịch' 
+        message: 'Không tìm thấy giao dịch',
+        status: statusDetails 
       });
     }
 
-    const status = await solanaService.checkTransactionStatus(signature);
+    // Phân tích thêm thông tin chi tiết
+    let details = {};
+    if (transaction) {
+      details = solanaService.parseTransactionDetails ? 
+               solanaService.parseTransactionDetails(transaction, '') : {};
+    }
 
     return res.json({
       success: true,
       data: {
         transaction,
-        status
+        status: statusDetails,
+        details
       }
     });
   } catch (error) {
@@ -39,6 +48,41 @@ async function checkTransaction(req, res) {
     return res.status(500).json({ 
       success: false, 
       message: 'Lỗi khi kiểm tra giao dịch', 
+      error: error.message 
+    });
+  }
+}
+
+/**
+ * Xác minh thông tin giao dịch
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ */
+async function verifyTransaction(req, res) {
+  try {
+    const { signature } = req.params;
+    const verifyParams = req.query;
+    
+    if (!signature) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Thiếu chữ ký giao dịch (signature)' 
+      });
+    }
+
+    // Xác minh giao dịch với các tham số đã cung cấp
+    const result = await solanaService.verifyTransaction(signature, verifyParams);
+
+    return res.json({
+      success: result.verified,
+      message: result.verified ? 'Giao dịch đã được xác minh thành công' : result.reason,
+      data: result
+    });
+  } catch (error) {
+    console.error('Lỗi khi xác minh giao dịch:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi khi xác minh giao dịch', 
       error: error.message 
     });
   }
@@ -127,5 +171,6 @@ async function getWalletTransactions(req, res) {
 module.exports = {
   checkTransaction,
   getWalletInfo,
-  getWalletTransactions
+  getWalletTransactions,
+  verifyTransaction
 }; 
