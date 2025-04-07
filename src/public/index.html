@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Chain Checker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #9945FF;
+            text-align: center;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            background-color: #f9f9f9;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        .tab.active {
+            background-color: white;
+            border-color: #ddd;
+            border-bottom-color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #9945FF;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #7d37d6;
+        }
+        .result {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #d32f2f;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #666;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+        }
+        .tx-row:hover {
+            background-color: #f5f5f5;
+            cursor: pointer;
+        }
+        .tx-status-success {
+            color: green;
+            font-weight: bold;
+        }
+        .tx-status-failed {
+            color: red;
+            font-weight: bold;
+        }
+        .tx-amount-positive {
+            color: green;
+            font-weight: bold;
+        }
+        .tx-amount-negative {
+            color: red;
+            font-weight: bold;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .pagination button {
+            margin: 0 5px;
+        }
+        .address-tag {
+            font-family: monospace;
+            background-color: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+            display: inline-block;
+        }
+        .tx-type {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background-color: #e1e1e1;
+            display: inline-block;
+        }
+        .tx-type-sol {
+            background-color: #9945FF;
+            color: white;
+        }
+        .tx-type-token {
+            background-color: #00C2FF;
+            color: white;
+        }
+        .tx-type-fee {
+            background-color: #FF7272;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Solana Chain Checker</h1>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="transaction">Kiểm tra giao dịch</div>
+            <div class="tab" data-tab="wallet">Kiểm tra ví</div>
+            <div class="tab" data-tab="transactions">Lịch sử giao dịch</div>
+        </div>
+        
+        <div class="tab-content active" id="transaction-content">
+            <div class="form-group">
+                <label for="txSignature">Chữ ký giao dịch (Signature)</label>
+                <input type="text" id="txSignature" placeholder="Nhập chữ ký giao dịch...">
+            </div>
+            <button id="checkTxBtn">Kiểm tra giao dịch</button>
+            <div id="txResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="tab-content" id="wallet-content">
+            <div class="form-group">
+                <label for="walletAddress">Địa chỉ ví Solana</label>
+                <input type="text" id="walletAddress" placeholder="Nhập địa chỉ ví...">
+            </div>
+            <button id="checkWalletBtn">Kiểm tra ví</button>
+            <div id="walletResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="tab-content" id="transactions-content">
+            <div class="form-group">
+                <label for="txWalletAddress">Địa chỉ ví Solana</label>
+                <input type="text" id="txWalletAddress" placeholder="Nhập địa chỉ ví...">
+            </div>
+            <div class="form-group">
+                <label for="txLimit">Số lượng giao dịch tối đa (1-100)</label>
+                <input type="number" id="txLimit" min="1" max="100" value="20">
+            </div>
+            <button id="checkWalletTxBtn">Xem lịch sử giao dịch</button>
+            <div id="txListResult" class="result" style="display: none;">
+                <div id="txListInfo"></div>
+                <table id="txListTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th width="5%">STT</th>
+                            <th width="15%">Thời gian</th>
+                            <th width="10%">Loại</th>
+                            <th width="15%">Số lượng</th>
+                            <th width="20%">Người gửi</th>
+                            <th width="20%">Người nhận</th>
+                            <th width="10%">Trạng thái</th>
+                            <th width="5%">Chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txListBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Solana Chain Checker - Công cụ kiểm tra giao dịch và ví trên mạng Solana Blockchain</p>
+    </div>
+
+    <script>
+        // Chuyển đổi tab
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Xóa active class từ tất cả tab
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Thêm active class cho tab được chọn
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-content`).classList.add('active');
+            });
+        });
+
+        // Hàm chuyển đổi lamports sang SOL
+        function lamportsToSol(lamports) {
+            return lamports / 1000000000;
+        }
+
+        // Hàm format ngày tháng
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+
+        // Hàm rút ngắn chuỗi
+        function shortenString(str, startLength = 6, endLength = 4) {
+            if (!str) return '';
+            if (str.length <= startLength + endLength) return str;
+            return `${str.substring(0, startLength)}...${str.substring(str.length - endLength)}`;
+        }
+
+        // Hàm định dạng số SOL với dấu phẩy ngăn cách hàng nghìn
+        function formatSol(amount) {
+            return new Intl.NumberFormat('vi-VN', { 
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 9 
+            }).format(amount);
+        }
+
+        // Hàm tạo tag loại giao dịch
+        function createTypeTag(type) {
+            let className = 'tx-type';
+            if (type.includes('chuyển SOL')) {
+                className += ' tx-type-sol';
+            } else if (type.includes('chuyển token')) {
+                className += ' tx-type-token';
+            } else if (type.includes('phí')) {
+                className += ' tx-type-fee';
+            }
+            return `<span class="${className}">${type}</span>`;
+        }
+
+        // Kiểm tra giao dịch
+        document.getElementById('checkTxBtn').addEventListener('click', async () => {
+            const signature = document.getElementById('txSignature').value.trim();
+            const resultDiv = document.getElementById('txResult');
+            
+            if (!signature) {
+                resultDiv.innerHTML = '<div class="error">Vui lòng nhập chữ ký giao dịch!</div>';
+                resultDiv.style.display = 'block';
+                return;
+            }
+            
+            resultDiv.innerHTML = 'Đang kiểm tra...';
+            resultDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch(`/api/transaction/${signature}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `<h3>Thông tin giao dịch</h3>
+                        <pre>${JSON.stringify(data.data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">${data.message}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Lỗi: ${error.message}</div>`;
+            }
+        });
+
+        // Kiểm tra ví
+        document.getElementById('checkWalletBtn').addEventListener('click', async () => {
+            const address = document.getElementById('walletAddress').value.trim();
+            const resultDiv = document.getElementById('walletResult');
+            
+            if (!address) {
+                resultDiv.innerHTML = '<div class="error">Vui lòng nhập địa chỉ ví!</div>';
+                resultDiv.style.display = 'block';
+                return;
+            }
+            
+            resultDiv.innerHTML = 'Đang kiểm tra...';
+            resultDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch(`/api/wallet/${address}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `<h3>Thông tin ví</h3>
+                        <pre>${JSON.stringify(data.data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">${data.message}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Lỗi: ${error.message}</div>`;
+            }
+        });
+
+        // Kiểm tra lịch sử giao dịch của ví
+        document.getElementById('checkWalletTxBtn').addEventListener('click', async () => {
+            const address = document.getElementById('txWalletAddress').value.trim();
+            const limit = document.getElementById('txLimit').value.trim();
+            const resultDiv = document.getElementById('txListResult');
+            const infoDiv = document.getElementById('txListInfo');
+            const table = document.getElementById('txListTable');
+            const tableBody = document.getElementById('txListBody');
+            
+            if (!address) {
+                resultDiv.innerHTML = '<div class="error">Vui lòng nhập địa chỉ ví!</div>';
+                resultDiv.style.display = 'block';
+                table.style.display = 'none';
+                return;
+            }
+            
+            infoDiv.innerHTML = 'Đang tải dữ liệu...';
+            resultDiv.style.display = 'block';
+            table.style.display = 'none';
+            
+            try {
+                const response = await fetch(`/api/wallet/${address}/transactions?limit=${limit}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    infoDiv.innerHTML = `<h3>Lịch sử giao dịch của ví</h3>
+                        <p>Địa chỉ: <span class="address-tag">${data.data.address}</span></p>
+                        <p>Số giao dịch: ${data.data.count}</p>`;
+                    
+                    // Xóa dữ liệu bảng cũ
+                    tableBody.innerHTML = '';
+                    
+                    // Thêm dữ liệu mới vào bảng
+                    if (data.data.transactions && data.data.transactions.length > 0) {
+                        data.data.transactions.forEach((tx, index) => {
+                            const row = document.createElement('tr');
+                            row.className = 'tx-row';
+                            row.dataset.signature = tx.signature;
+                            
+                            const statusClass = tx.status === 'thành công' ? 'tx-status-success' : 'tx-status-failed';
+                            const amountClass = tx.amount > 0 ? 'tx-amount-positive' : (tx.amount < 0 ? 'tx-amount-negative' : '');
+                            const amountText = tx.amount !== 0 ? `${formatSol(tx.amount)} SOL` : '-';
+                            
+                            row.innerHTML = `
+                                <td>${index + 1}</td>
+                                <td>${formatDate(tx.timestamp)}</td>
+                                <td>${createTypeTag(tx.type)}</td>
+                                <td class="${amountClass}">${amountText}</td>
+                                <td><span class="address-tag" title="${tx.sender}">${shortenString(tx.sender, 6, 4)}</span></td>
+                                <td><span class="address-tag" title="${tx.receiver}">${shortenString(tx.receiver, 6, 4)}</span></td>
+                                <td class="${statusClass}">${tx.status}</td>
+                                <td><button class="view-tx-btn" data-signature="${tx.signature}">Chi tiết</button></td>
+                            `;
+                            
+                            tableBody.appendChild(row);
+                        });
+                        
+                        // Thêm sự kiện click cho nút chi tiết
+                        document.querySelectorAll('.view-tx-btn').forEach(btn => {
+                            btn.addEventListener('click', (e) => {
+                                e.stopPropagation(); // Ngăn sự kiện click lan ra hàng
+                                const signature = btn.dataset.signature;
+                                document.getElementById('txSignature').value = signature;
+                                document.querySelector('.tab[data-tab="transaction"]').click();
+                                document.getElementById('checkTxBtn').click();
+                            });
+                        });
+                        
+                        table.style.display = 'table';
+                    } else {
+                        infoDiv.innerHTML += '<p>Không tìm thấy giao dịch nào.</p>';
+                        table.style.display = 'none';
+                    }
+                } else {
+                    infoDiv.innerHTML = `<div class="error">${data.message}</div>`;
+                    table.style.display = 'none';
+                }
+            } catch (error) {
+                infoDiv.innerHTML = `<div class="error">Lỗi: ${error.message}</div>`;
+                table.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 
