@@ -6,21 +6,43 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "twitter:start": "node twitter-crawler.js start",
+    "twitter:crawl": "node twitter-crawler.js run-once",
+    "twitter:stats": "node twitter-crawler.js stats",
+    "dashboard": "node src/dashboard/dashboardServer.js",
+    "dev:dashboard": "nodemon src/dashboard/dashboardServer.js"
   },
   "keywords": [
     "solana",
     "blockchain",
     "transaction",
-    "checker"
+    "checker",
+    "crypto",
+    "twitter",
+    "crawler",
+    "dashboard"
   ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@solana/spl-token": "^0.3.9",
     "@solana/web3.js": "^1.87.6",
+    "axios": "^1.5.0",
+    "chart.js": "^4.4.1",
+    "cheerio": "^1.0.0-rc.12",
+    "connect-flash": "^0.1.1",
+    "cron": "^2.4.3",
     "dotenv": "^16.3.1",
-    "express": "^4.18.2"
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-session": "^1.18.1",
+    "moment": "^2.30.1",
+    "mongodb": "^5.7.0",
+    "morgan": "^1.10.0",
+    "natural": "^8.0.1",
+    "sentiment": "^5.0.2",
+    "twitter-api-v2": "^1.15.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

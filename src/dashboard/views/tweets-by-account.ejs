@@ -1,0 +1,115 @@
+<%- include('layouts/header') %>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="/analytics">Phân tích</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Tweets từ @<%= username %></li>
+            </ol>
+        </nav>
+        
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-user me-2"></i>
+                    Tweets từ @<%= username %>
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <p class="lead mb-0">
+                        Tìm thấy <strong><%= totalTweets %></strong> tweets từ tài khoản <strong>@<%= username %></strong>
+                    </p>
+                    <a href="https://twitter.com/<%= username %>" target="_blank" class="btn btn-outline-primary">
+                        <i class="fab fa-twitter me-2"></i>Xem trên Twitter
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fab fa-twitter me-2"></i>Danh sách tweets</h5>
+            </div>
+            <div class="card-body">
+                <% if (tweets && tweets.length > 0) { %>
+                    <div class="list-group">
+                        <% tweets.forEach(tweet => { %>
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">
+                                        <a href="/account/<%= tweet.username %>" class="text-decoration-none">
+                                            @<%= tweet.username %>
+                                        </a>
+                                    </h5>
+                                    <small><%= moment(tweet.createdAt).fromNow() %></small>
+                                </div>
+                                <p class="mb-1"><%= tweet.text %></p>
+                                <div>
+                                    <% if (tweet.coins && tweet.coins.length > 0) { %>
+                                        <% tweet.coins.forEach(coin => { %>
+                                            <a href="/coin/<%= coin %>" class="badge bg-primary text-decoration-none me-1">
+                                                <%= coin %>
+                                            </a>
+                                        <% }); %>
+                                    <% } %>
+                                    
+                                    <% if (tweet.hashtags && tweet.hashtags.length > 0) { %>
+                                        <% tweet.hashtags.forEach(hashtag => { %>
+                                            <a href="/hashtag/<%= hashtag %>" class="badge bg-secondary text-decoration-none me-1">
+                                                #<%= hashtag %>
+                                            </a>
+                                        <% }); %>
+                                    <% } %>
+
+                                    <% if (tweet.sentiment) { %>
+                                        <span class="badge <%= tweet.sentiment === 'positive' ? 'bg-success' : (tweet.sentiment === 'negative' ? 'bg-danger' : 'bg-secondary') %> ms-2">
+                                            <%= tweet.sentiment === 'positive' ? 'Tích cực' : (tweet.sentiment === 'negative' ? 'Tiêu cực' : 'Trung tính') %>
+                                        </span>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+
+                    <!-- Phân trang -->
+                    <% if (totalPages > 1) { %>
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                                    <a class="page-link" href="?page=<%= currentPage - 1 %>" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                
+                                <% for (let i = 1; i <= totalPages; i++) { %>
+                                    <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                        <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                                    </li>
+                                <% } %>
+                                
+                                <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                    <a class="page-link" href="?page=<%= currentPage + 1 %>" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    <% } %>
+                <% } else { %>
+                    <div class="alert alert-info">
+                        Không tìm thấy tweets nào từ @<%= username %>.
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('layouts/footer') %> 

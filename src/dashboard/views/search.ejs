@@ -1,0 +1,120 @@
+<%- include('layouts/header') %>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-search me-2"></i>Tìm kiếm tweets</h4>
+            </div>
+            <div class="card-body">
+                <form action="/search" method="POST" class="row g-3">
+                    <div class="col-md-8">
+                        <label for="query" class="form-label">Từ khóa tìm kiếm</label>
+                        <input type="text" class="form-control" id="query" name="query" 
+                               placeholder="Nhập từ khóa..." value="<%= query %>" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="type" class="form-label">Loại tìm kiếm</label>
+                        <select class="form-select" id="type" name="type">
+                            <option value="text" <%= searchType === 'text' ? 'selected' : '' %>>Nội dung tweet</option>
+                            <option value="coin" <%= searchType === 'coin' ? 'selected' : '' %>>Coin (BTC, ETH, ...)</option>
+                            <option value="username" <%= searchType === 'username' ? 'selected' : '' %>>Tài khoản Twitter</option>
+                            <option value="hashtag" <%= searchType === 'hashtag' ? 'selected' : '' %>>Hashtag</option>
+                        </select>
+                    </div>
+                    <div class="col-12 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>Tìm kiếm
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<% if (results) { %>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fab fa-twitter me-2"></i>Kết quả tìm kiếm</h5>
+                    <span class="badge bg-light text-dark"><%= totalResults || 0 %> kết quả</span>
+                </div>
+                <div class="card-body">
+                    <% if (results.length > 0) { %>
+                        <div class="list-group">
+                            <% results.forEach(tweet => { %>
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">
+                                            <a href="/account/<%= tweet.username %>" class="text-decoration-none">
+                                                @<%= tweet.username %>
+                                            </a>
+                                        </h5>
+                                        <small><%= moment(tweet.createdAt).fromNow() %></small>
+                                    </div>
+                                    <p class="mb-1"><%= tweet.text %></p>
+                                    <div>
+                                        <% if (tweet.coins && tweet.coins.length > 0) { %>
+                                            <% tweet.coins.forEach(coin => { %>
+                                                <a href="/coin/<%= coin %>" class="badge bg-primary text-decoration-none me-1">
+                                                    <%= coin %>
+                                                </a>
+                                            <% }); %>
+                                        <% } %>
+                                        
+                                        <% if (tweet.hashtags && tweet.hashtags.length > 0) { %>
+                                            <% tweet.hashtags.forEach(hashtag => { %>
+                                                <a href="/hashtag/<%= hashtag %>" class="badge bg-secondary text-decoration-none me-1">
+                                                    #<%= hashtag %>
+                                                </a>
+                                            <% }); %>
+                                        <% } %>
+
+                                        <% if (tweet.sentiment) { %>
+                                            <span class="badge <%= tweet.sentiment === 'positive' ? 'bg-success' : (tweet.sentiment === 'negative' ? 'bg-danger' : 'bg-secondary') %> ms-2">
+                                                <%= tweet.sentiment === 'positive' ? 'Tích cực' : (tweet.sentiment === 'negative' ? 'Tiêu cực' : 'Trung tính') %>
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+
+                        <!-- Phân trang -->
+                        <% if (totalPages > 1) { %>
+                            <nav aria-label="Page navigation" class="mt-4">
+                                <ul class="pagination justify-content-center">
+                                    <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                                        <a class="page-link" href="?page=<%= currentPage - 1 %>" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                    
+                                    <% for (let i = 1; i <= totalPages; i++) { %>
+                                        <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                            <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                                        </li>
+                                    <% } %>
+                                    
+                                    <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                        <a class="page-link" href="?page=<%= currentPage + 1 %>" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        <% } %>
+                    <% } else { %>
+                        <div class="alert alert-info">
+                            Không tìm thấy kết quả nào phù hợp với từ khóa "<%= query %>".
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+<% } %>
+
+<%- include('layouts/footer') %> 

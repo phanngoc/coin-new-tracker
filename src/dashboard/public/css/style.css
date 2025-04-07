@@ -1,0 +1,143 @@
+/* Crypto Twitter Analytics Dashboard - CSS */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    color: #343a40;
+}
+
+/* Header & Navbar */
+.navbar-brand {
+    font-weight: 600;
+}
+
+/* Cards */
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    font-weight: 600;
+}
+
+/* Jumbotron */
+.jumbotron {
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Badges */
+.badge {
+    font-weight: 500;
+}
+
+/* Tweet cards */
+.list-group-item {
+    transition: all 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Tweet info */
+.tweet-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.tweet-username {
+    font-weight: 600;
+    color: #1da1f2;
+}
+
+.tweet-content {
+    margin-bottom: 10px;
+}
+
+.tweet-tags {
+    margin-top: 8px;
+}
+
+/* Pagination */
+.pagination {
+    margin-top: 20px;
+}
+
+/* Charts */
+canvas {
+    max-width: 100%;
+    height: auto !important;
+}
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+}
+
+/* Responsive media queries */
+@media (max-width: 768px) {
+    .jumbotron h1 {
+        font-size: 2rem;
+    }
+    
+    .card-title {
+        font-size: 1.2rem;
+    }
+}
+
+/* Progress bars */
+.progress {
+    height: 20px;
+    margin-bottom: 10px;
+}
+
+.progress-bar {
+    line-height: 20px;
+    font-size: 0.8rem;
+}
+
+/* Search form */
+.search-form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Stats boxes */
+.stats-box {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.stats-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 10px 0;
+}
+
+.stats-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6c757d;
+}
+
+/* Dark mode toggle */
+.dark-mode-toggle {
+    cursor: pointer;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+} 

@@ -1,0 +1,370 @@
+<%- include('layouts/header') %>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-spider me-2"></i>Twitter Crawler</h4>
+            </div>
+            <div class="card-body">
+                <p class="lead">
+                    Công cụ crawl dữ liệu từ Twitter. Kiểm tra rate limit và thực hiện crawl thủ công từ tài khoản hoặc hashtag.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card border-info h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Twitter API Rate Limit</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert <%= rateLimitState.userTimeline.remaining > 0 ? 'alert-success' : 'alert-danger' %>">
+                    <h5><i class="fas fa-user me-2"></i>User Timeline API</h5>
+                    <div class="progress mb-3">
+                        <% let userTimelineWidth = (rateLimitState.userTimeline.remaining / rateLimitState.userTimeline.limit * 100).toFixed(0) + '%'; %>
+                        <div class="progress-bar <%= rateLimitState.userTimeline.remaining > 0 ? 'bg-success' : 'bg-danger' %>" 
+                             role="progressbar" 
+                             style="width: <%= userTimelineWidth %>" 
+                             aria-valuenow="<%= rateLimitState.userTimeline.remaining %>" 
+                             aria-valuemin="0" 
+                             aria-valuemax="<%= rateLimitState.userTimeline.limit %>">
+                            <%= rateLimitState.userTimeline.remaining %>/<%= rateLimitState.userTimeline.limit %>
+                        </div>
+                    </div>
+                    <p class="mb-0">
+                        <strong>Còn lại:</strong> <%= rateLimitState.userTimeline.remaining %> requests<br>
+                        <strong>Tổng cộng:</strong> <%= rateLimitState.userTimeline.limit %> requests<br>
+                        <strong>Reset lúc:</strong> <%= moment(rateLimitState.userTimeline.reset).format('HH:mm:ss DD-MM-YYYY') %>
+                    </p>
+                </div>
+
+                <div class="alert <%= rateLimitState.search.remaining > 0 ? 'alert-success' : 'alert-danger' %>">
+                    <h5><i class="fas fa-search me-2"></i>Search API</h5>
+                    <div class="progress mb-3">
+                        <% let searchWidth = (rateLimitState.search.remaining / rateLimitState.search.limit * 100).toFixed(0) + '%'; %>
+                        <div class="progress-bar <%= rateLimitState.search.remaining > 0 ? 'bg-success' : 'bg-danger' %>" 
+                             role="progressbar" 
+                             style="width: <%= searchWidth %>" 
+                             aria-valuenow="<%= rateLimitState.search.remaining %>" 
+                             aria-valuemin="0" 
+                             aria-valuemax="<%= rateLimitState.search.limit %>">
+                            <%= rateLimitState.search.remaining %>/<%= rateLimitState.search.limit %>
+                        </div>
+                    </div>
+                    <p class="mb-0">
+                        <strong>Còn lại:</strong> <%= rateLimitState.search.remaining %> requests<br>
+                        <strong>Tổng cộng:</strong> <%= rateLimitState.search.limit %> requests<br>
+                        <strong>Reset lúc:</strong> <%= moment(rateLimitState.search.reset).format('HH:mm:ss DD-MM-YYYY') %>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card border-success h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-database me-2"></i>Thống kê dữ liệu</h5>
+            </div>
+            <div class="card-body">
+                <% if (stats) { %>
+                    <div class="row text-center">
+                        <div class="col-md-6 mb-4">
+                            <div class="stats-box">
+                                <div class="small text-muted">Tổng số tweets</div>
+                                <div class="stats-number"><%= stats.totalTweets.toLocaleString() %></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="stats-box">
+                                <div class="small text-muted">Số lượng coins</div>
+                                <div class="stats-number"><%= stats.topCoins.length %></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="stats-box">
+                                <div class="small text-muted">Số lượng hashtags</div>
+                                <div class="stats-number"><%= stats.topHashtags.length %></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="stats-box">
+                                <div class="small text-muted">Số lượng tài khoản</div>
+                                <div class="stats-number"><%= stats.topAccounts.length %></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-center text-muted">
+                        Cập nhật lần cuối: <%= moment(stats.updatedAt).fromNow() %>
+                    </p>
+                <% } else { %>
+                    <div class="alert alert-warning">
+                        Chưa có dữ liệu thống kê. Hãy crawl dữ liệu.
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<% if (success_msg && success_msg.length > 0) { %>
+    <div class="alert alert-success">
+        <%= success_msg %>
+    </div>
+<% } %>
+
+<% if (error_msg && error_msg.length > 0) { %>
+    <div class="alert alert-danger">
+        <%= error_msg %>
+    </div>
+<% } %>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user me-2"></i>Crawl từ tài khoản</h5>
+            </div>
+            <div class="card-body">
+                <form action="/dashboard/crawl/account" method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Tài khoản Twitter</label>
+                        <div class="input-group">
+                            <span class="input-group-text">@</span>
+                            <select class="form-select" id="username" name="username" required>
+                                <option value="">Chọn tài khoản...</option>
+                                <% accounts.forEach(account => { %>
+                                    <option value="<%= account %>"><%= account %></option>
+                                <% }); %>
+                                <option value="custom">Tài khoản khác...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="customUsernameGroup" style="display: none;">
+                        <label for="customUsername" class="form-label">Tài khoản tùy chỉnh</label>
+                        <div class="input-group">
+                            <span class="input-group-text">@</span>
+                            <input type="text" class="form-control" id="customUsername">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="maxResults" class="form-label">Số lượng tweets tối đa</label>
+                        <input type="number" class="form-control" id="maxResults" name="maxResults" min="1" max="100" value="10">
+                        <div class="form-text">Số lượng tweets tối đa để crawl (1-100)</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" <%= rateLimitState.userTimeline.remaining === 0 ? 'disabled' : '' %>>
+                        <i class="fas fa-spider me-2"></i>Crawl dữ liệu
+                    </button>
+                    <% if (rateLimitState.userTimeline.remaining === 0) { %>
+                        <div class="form-text text-danger">
+                            Rate limit đã hết. Vui lòng đợi đến <%= moment(rateLimitState.userTimeline.reset).format('HH:mm:ss DD-MM-YYYY') %>.
+                        </div>
+                    <% } %>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-hashtag me-2"></i>Crawl từ hashtag</h5>
+            </div>
+            <div class="card-body">
+                <form action="/dashboard/crawl/hashtag" method="POST">
+                    <div class="mb-3">
+                        <label for="hashtag" class="form-label">Hashtag</label>
+                        <div class="input-group">
+                            <span class="input-group-text">#</span>
+                            <select class="form-select" id="hashtag" name="hashtag" required>
+                                <option value="">Chọn hashtag...</option>
+                                <% hashtags.forEach(hashtag => { %>
+                                    <option value="<%= hashtag %>"><%= hashtag %></option>
+                                <% }); %>
+                                <option value="custom">Hashtag khác...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="customHashtagGroup" style="display: none;">
+                        <label for="customHashtag" class="form-label">Hashtag tùy chỉnh</label>
+                        <div class="input-group">
+                            <span class="input-group-text">#</span>
+                            <input type="text" class="form-control" id="customHashtag">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="maxResults" class="form-label">Số lượng tweets tối đa</label>
+                        <input type="number" class="form-control" id="maxResults" name="maxResults" min="1" max="100" value="10">
+                        <div class="form-text">Số lượng tweets tối đa để crawl (1-100)</div>
+                    </div>
+                    <button type="submit" class="btn btn-secondary" <%= rateLimitState.search.remaining === 0 ? 'disabled' : '' %>>
+                        <i class="fas fa-spider me-2"></i>Crawl dữ liệu
+                    </button>
+                    <% if (rateLimitState.search.remaining === 0) { %>
+                        <div class="form-text text-danger">
+                            Rate limit đã hết. Vui lòng đợi đến <%= moment(rateLimitState.search.reset).format('HH:mm:ss DD-MM-YYYY') %>.
+                        </div>
+                    <% } %>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Lịch sử crawl</h5>
+            </div>
+            <div class="card-body">
+                <% if (crawlHistory && crawlHistory.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>Loại</th>
+                                    <th>Đối tượng</th>
+                                    <th>Kết quả</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% crawlHistory.forEach(history => { %>
+                                    <tr>
+                                        <td><%= moment(history.timestamp).format('HH:mm:ss DD-MM-YYYY') %></td>
+                                        <td>
+                                            <% if (history.type === 'account') { %>
+                                                <span class="badge bg-primary">Tài khoản</span>
+                                            <% } else if (history.type === 'hashtag') { %>
+                                                <span class="badge bg-secondary">Hashtag</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (history.type === 'account') { %>
+                                                <a href="/dashboard/account/<%= history.target %>">@<%= history.target %></a>
+                                            <% } else if (history.type === 'hashtag') { %>
+                                                <a href="/dashboard/hashtag/<%= history.target %>">#<%= history.target %></a>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (history.success) { %>
+                                                <span class="text-success"><%= history.count %> tweets</span>
+                                            <% } else { %>
+                                                <span class="text-danger">Lỗi</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (history.success) { %>
+                                                <span class="badge bg-success">Thành công</span>
+                                            <% } else { %>
+                                                <span class="badge bg-danger" data-bs-toggle="tooltip" title="<%= history.error %>">Thất bại</span>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-info">
+                        Chưa có lịch sử crawl nào.
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Hiển thị tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+        
+        // Xử lý tài khoản tùy chỉnh
+        const usernameSelect = document.getElementById('username');
+        const customUsernameGroup = document.getElementById('customUsernameGroup');
+        const customUsername = document.getElementById('customUsername');
+        
+        usernameSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customUsernameGroup.style.display = 'block';
+                customUsername.setAttribute('required', 'required');
+            } else {
+                customUsernameGroup.style.display = 'none';
+                customUsername.removeAttribute('required');
+            }
+        });
+        
+        // Xử lý hashtag tùy chỉnh
+        const hashtagSelect = document.getElementById('hashtag');
+        const customHashtagGroup = document.getElementById('customHashtagGroup');
+        const customHashtag = document.getElementById('customHashtag');
+        
+        hashtagSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customHashtagGroup.style.display = 'block';
+                customHashtag.setAttribute('required', 'required');
+            } else {
+                customHashtagGroup.style.display = 'none';
+                customHashtag.removeAttribute('required');
+            }
+        });
+        
+        // Ghi đè username nếu có tùy chỉnh
+        document.querySelector('form[action="/dashboard/crawl/account"]').addEventListener('submit', function(e) {
+            if (usernameSelect.value === 'custom') {
+                e.preventDefault();
+                
+                // Cập nhật giá trị username từ input tùy chỉnh
+                const customValue = customUsername.value.trim();
+                
+                if (customValue) {
+                    // Xóa ký tự @ nếu có
+                    const finalValue = customValue.startsWith('@') ? customValue.substring(1) : customValue;
+                    
+                    // Cập nhật select
+                    const newOption = new Option(finalValue, finalValue, true, true);
+                    usernameSelect.options[usernameSelect.options.length] = newOption;
+                    usernameSelect.value = finalValue;
+                    
+                    // Gửi lại form
+                    this.submit();
+                }
+            }
+        });
+        
+        // Ghi đè hashtag nếu có tùy chỉnh
+        document.querySelector('form[action="/dashboard/crawl/hashtag"]').addEventListener('submit', function(e) {
+            if (hashtagSelect.value === 'custom') {
+                e.preventDefault();
+                
+                // Cập nhật giá trị hashtag từ input tùy chỉnh
+                const customValue = customHashtag.value.trim();
+                
+                if (customValue) {
+                    // Xóa ký tự # nếu có
+                    const finalValue = customValue.startsWith('#') ? customValue.substring(1) : customValue;
+                    
+                    // Cập nhật select
+                    const newOption = new Option(finalValue, finalValue, true, true);
+                    hashtagSelect.options[hashtagSelect.options.length] = newOption;
+                    hashtagSelect.value = finalValue;
+                    
+                    // Gửi lại form
+                    this.submit();
+                }
+            }
+        });
+    });
+</script>
+
+<%- include('layouts/footer') %> 

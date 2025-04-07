@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Crypto Twitter Analytics</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Chart.js Extensions cho biểu đồ nến -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1/dist/chartjs-adapter-moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fab fa-twitter text-primary me-2"></i>
+                Crypto Twitter Analytics
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="fas fa-home me-1"></i>Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/analytics"><i class="fas fa-chart-bar me-1"></i>Phân tích</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-coins me-1"></i>Top Coins
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="/coin/BTC">Bitcoin (BTC)</a></li>
+                            <li><a class="dropdown-item" href="/coin/ETH">Ethereum (ETH)</a></li>
+                            <li><a class="dropdown-item" href="/coin/BNB">Binance Coin (BNB)</a></li>
+                            <li><a class="dropdown-item" href="/coin/SOL">Solana (SOL)</a></li>
+                            <li><a class="dropdown-item" href="/coin/XRP">Ripple (XRP)</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/analytics">Xem tất cả</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/crawl"><i class="fas fa-spider me-1"></i>Twitter Crawler</a>
+                    </li>
+                </ul>
+                <form class="d-flex" role="search" action="/search" method="POST">
+                    <div class="input-group">
+                        <input class="form-control" type="search" name="query" placeholder="Tìm tweets..." aria-label="Search">
+                        <select class="form-select flex-grow-0 w-auto" name="type">
+                            <option value="text">Nội dung</option>
+                            <option value="coin">Coin</option>
+                            <option value="username">Username</option>
+                            <option value="hashtag">Hashtag</option>
+                        </select>
+                        <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container"> 

@@ -1,0 +1,158 @@
+<%- include('layouts/header') %>
+
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="jumbotron bg-light p-4 rounded">
+            <h1 class="display-5"><i class="fab fa-twitter text-primary"></i> Crypto Twitter Analytics</h1>
+            <p class="lead">Theo dõi và phân tích tin tức cryptocurrency từ Twitter.</p>
+            <hr class="my-4">
+            <p>Nền tảng giúp bạn theo dõi tin tức từ các KOLs và hashtag cryptocurrency phổ biến.</p>
+            <a class="btn btn-primary btn-lg" href="/analytics" role="button">Xem phân tích</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Thống kê tổng quan -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-primary h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2"></i>Thống kê tổng quan</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h3 class="display-4"><%= totalTweets.toLocaleString() %></h3>
+                    <p class="text-muted">Tổng số tweets</p>
+                </div>
+                
+                <div class="list-group">
+                    <a href="/analytics" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Phân tích xu hướng
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                    <a href="/search" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Tìm kiếm nâng cao
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Coins -->
+    <div class="col-md-8 mb-4">
+        <div class="card border-success h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-coins me-2"></i>Top Coins được đề cập</h5>
+            </div>
+            <div class="card-body">
+                <% if (topCoins && topCoins.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Coin</th>
+                                    <th scope="col">Lượt đề cập</th>
+                                    <th scope="col">Tích cực</th>
+                                    <th scope="col">Tiêu cực</th>
+                                    <th scope="col"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% topCoins.forEach((coin, index) => { %>
+                                    <tr>
+                                        <th scope="row"><%= index + 1 %></th>
+                                        <td><strong><%= coin._id %></strong></td>
+                                        <td><span class="badge bg-primary rounded-pill"><%= coin.count %></span></td>
+                                        <td>
+                                            <div class="progress" style="height: 15px;">
+                                                <div class="progress-bar bg-success" role="progressbar" 
+                                                    style="width: <%= (coin.positiveTweets / coin.count * 100).toFixed(0) %>%;" 
+                                                    aria-valuenow="<%= coin.positiveTweets %>" aria-valuemin="0" aria-valuemax="<%= coin.count %>">
+                                                    <%= coin.positiveTweets %>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 15px;">
+                                                <div class="progress-bar bg-danger" role="progressbar" 
+                                                    style="width: <%= (coin.negativeTweets / coin.count * 100).toFixed(0) %>%;" 
+                                                    aria-valuenow="<%= coin.negativeTweets %>" aria-valuemin="0" aria-valuemax="<%= coin.count %>">
+                                                    <%= coin.negativeTweets %>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a href="/coin/<%= coin._id %>" class="btn btn-sm btn-outline-primary">Chi tiết</a>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-info">
+                        Chưa có dữ liệu về coins.
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Tweets mới nhất -->
+    <div class="col-12 mb-4">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fab fa-twitter me-2"></i>Tweets mới nhất</h5>
+            </div>
+            <div class="card-body">
+                <% if (latestTweets && latestTweets.length > 0) { %>
+                    <div class="list-group">
+                        <% latestTweets.forEach(tweet => { %>
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">
+                                        <a href="/account/<%= tweet.username %>" class="text-decoration-none">
+                                            @<%= tweet.username %>
+                                        </a>
+                                    </h5>
+                                    <small><%= moment(tweet.createdAt).fromNow() %></small>
+                                </div>
+                                <p class="mb-1"><%= tweet.text %></p>
+                                <div>
+                                    <% if (tweet.coins && tweet.coins.length > 0) { %>
+                                        <% tweet.coins.forEach(coin => { %>
+                                            <a href="/coin/<%= coin %>" class="badge bg-primary text-decoration-none me-1">
+                                                <%= coin %>
+                                            </a>
+                                        <% }); %>
+                                    <% } %>
+                                    
+                                    <% if (tweet.hashtags && tweet.hashtags.length > 0) { %>
+                                        <% tweet.hashtags.forEach(hashtag => { %>
+                                            <a href="/hashtag/<%= hashtag %>" class="badge bg-secondary text-decoration-none me-1">
+                                                #<%= hashtag %>
+                                            </a>
+                                        <% }); %>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-info">
+                        Chưa có tweets nào.
+                    </div>
+                <% } %>
+            </div>
+            <div class="card-footer">
+                <a href="/search" class="btn btn-outline-info">Xem thêm tweets</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('layouts/footer') %> 
