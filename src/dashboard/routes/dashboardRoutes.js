@@ -15,6 +15,9 @@ router.get('/', dashboardController.getHomePage);
 // Trang phân tích
 router.get('/analytics', dashboardController.getAnalytics);
 
+// Trang phân tích chi tiết cho một coin
+router.get('/coin-analysis/:coin', dashboardController.getCoinAnalysis);
+
 // Tìm kiếm
 router.get('/search', dashboardController.getSearchPage);
 router.post('/search', dashboardController.searchTweets);
@@ -33,4 +36,4 @@ router.get('/crawl', crawlController.getCrawlPage);
 router.post('/crawl/account', crawlController.crawlAccount);
 router.post('/crawl/hashtag', crawlController.crawlHashtag);
 
-module.exports = router; 
+module.exports = router;

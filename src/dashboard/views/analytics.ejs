@@ -182,7 +182,10 @@
                                     <tr>
                                         <th scope="row"><%= index + 1 %></th>
                                         <td>
-                                            <strong><%= coin._id %></strong>
+                                            <a href="/coin-analysis/<%= coin._id %>" class="text-decoration-none">
+                                                <strong><%= coin._id %></strong>
+                                                <i class="fas fa-chart-bar ms-1 text-primary" data-bs-toggle="tooltip" title="Xem phân tích chi tiết"></i>
+                                            </a>
                                         </td>
                                         <td>
                                             <span class="badge bg-primary rounded-pill"><%= coin.count %></span>
@@ -442,7 +445,10 @@ function loadCryptoPrices() {
                     <img src="https://cryptologos.cc/logos/${coin.name.toLowerCase()}-${coin.symbol.toLowerCase()}-logo.png" 
                          alt="${coin.symbol}" width="24" height="24" class="me-2" 
                          onerror="this.onerror=null; this.src='/images/default-coin.png';">
-                    <strong>${coin.symbol}</strong>
+                    <a href="/coin-analysis/${coin.symbol}" class="text-decoration-none">
+                        <strong>${coin.symbol}</strong>
+                        <i class="fas fa-chart-bar ms-1 text-primary" data-bs-toggle="tooltip" title="Xem phân tích chi tiết"></i>
+                    </a>
                 </div>
             </td>
             <td>$${coin.price.toLocaleString()}</td>
@@ -571,9 +577,6 @@ function initCryptoChart() {
         console.log('analyticsCurrentCoin:', analyticsCurrentCoin);
         console.log('coinPriceData:', coinPriceData);
         console.log('cryptoChartAnalytics:', cryptoChartAnalytics);
-        console.log('cryptoChartAnalytics.data.datasets:', cryptoChartAnalytics.data.datasets);
-        console.log('cryptoChartAnalytics.data:', cryptoChartAnalytics.data);
-        console.log('cryptoChartAnalytics.options:', cryptoChartAnalytics.options);
         // Cập nhật dữ liệu ban đầu
         updateChartData(analyticsCurrentCoin);
         
@@ -619,101 +622,37 @@ function updateChartData(coin) {
     if (!cryptoChartAnalytics || !coinPriceData[coin]) return;
     
     const data = coinPriceData[coin];
-    console.log('Dữ liệu biểu đồ:', data, coin, coinPriceData);
+    
     const showMA = document.getElementById('showMA')?.checked ?? true;
     const showEMA = document.getElementById('showEMA')?.checked ?? true;
     const showVolume = document.getElementById('showVolume')?.checked ?? true;
     
     // Xóa dữ liệu cũ
     cryptoChartAnalytics.data.datasets = [];
-    
+    console.log('updateChartData:', coin, data)
     // Thêm dữ liệu nến
     cryptoChartAnalytics.data.datasets.push({
         label: `${coin} Price`,
-        data: data.map(d => ({
+        type: 'candlestick',
+        data: data?.map(d => ({
             x: new Date(d.time),
             o: d.open,
             h: d.high,
             l: d.low,
             c: d.close
-        })),
-        type: 'candlestick',
-        candleStick: {
-            color: {
-                up: 'rgba(75, 192, 192, 1)',
-                down: 'rgba(255, 99, 132, 1)',
-                unchanged: 'rgba(90, 90, 90, 1)',
-            }
+        })) || [],
+        color: {
+            up: 'rgba(40, 167, 69, 1)',
+            down: 'rgba(220, 53, 69, 1)',
+            unchanged: 'rgba(90, 90, 90, 1)',
         }
     });
     
-    // Thêm đường MA nếu được chọn
-    if (showMA) {
-        const ma7 = calculateMA(data, 7);
-        const ma25 = calculateMA(data, 25);
-        
-        cryptoChartAnalytics.data.datasets.push({
-            label: 'MA(7)',
-            data: ma7.map((value, index) => ({ x: new Date(data[index]?.time), y: value })),
-            borderColor: 'rgba(255, 159, 64, 1)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.1,
-            pointRadius: 0,
-            type: 'line',
-            yAxisID: 'y'
-        });
-        
-        cryptoChartAnalytics.data.datasets.push({
-            label: 'MA(25)',
-            data: ma25.map((value, index) => ({ x: new Date(data[index]?.time), y: value })),
-            borderColor: 'rgba(153, 102, 255, 1)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.1,
-            pointRadius: 0,
-            type: 'line',
-            yAxisID: 'y'
-        });
-    }
-    
-    // Thêm đường EMA nếu được chọn
-    if (showEMA) {
-        const ema7 = calculateEMA(data, 7);
-        const ema25 = calculateEMA(data, 25);
-        
-        cryptoChartAnalytics.data.datasets.push({
-            label: 'EMA(7)',
-            data: ema7.map((value, index) => ({ x: new Date(data[index]?.time), y: value })),
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.1,
-            pointRadius: 0,
-            type: 'line',
-            borderDash: [5, 5],
-            yAxisID: 'y'
-        });
-        
-        cryptoChartAnalytics.data.datasets.push({
-            label: 'EMA(25)',
-            data: ema25.map((value, index) => ({ x: new Date(data[index]?.time), y: value })),
-            borderColor: 'rgba(255, 206, 86, 1)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.1,
-            pointRadius: 0,
-            type: 'line',
-            borderDash: [5, 5],
-            yAxisID: 'y'
-        });
-    }
-    
     // Thêm khối lượng nếu được chọn
-    if (showVolume) {
+    if (showVolume && data && data.length > 0) {
         cryptoChartAnalytics.data.datasets.push({
             label: 'Volume',
-            data: data.map(d => ({ x: new Date(d.time), y: d.volume })),
+            data: data.map(d => ({ x: new Date(d.time), y: d.volume || 0 })),
             backgroundColor: 'rgba(75, 192, 192, 0.2)',
             type: 'bar',
             yAxisID: 'volume'
@@ -721,8 +660,12 @@ function updateChartData(coin) {
     }
     
     // Cập nhật biểu đồ
-    cryptoChartAnalytics.update();
+    try {
+        cryptoChartAnalytics.update();
+    } catch (error) {
+        console.error('Lỗi khi cập nhật biểu đồ:', error);
+    }
 }
 </script>
 
-<%- include('layouts/footer') %> 
+<%- include('layouts/footer') %>

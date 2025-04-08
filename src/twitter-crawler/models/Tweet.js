@@ -202,6 +202,94 @@ class Tweet {
     ]).toArray();
   }
 
+  /**
+   * Phân tích sentiment của một coin theo thời gian
+   */
+  async getCoinSentimentTrend(coinSymbol, days = 30) {
+    await this.initialize();
+    
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    startDate.setHours(0, 0, 0, 0);
+    
+    return this.collection.aggregate([
+      { 
+        $match: { 
+          createdAt: { $gte: startDate },
+          coins: coinSymbol
+        }
+      },
+      { 
+        $group: { 
+          _id: {
+            date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            sentiment: '$sentiment'
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { 
+        $project: { 
+          _id: '$_id.date',
+          sentiment: '$_id.sentiment',
+          count: 1
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]).toArray();
+  }
+
+  /**
+   * Lấy top tài khoản đề cập nhiều nhất về một coin cụ thể
+   */
+  async getTopAccountsForCoin(coinSymbol, limit = 10) {
+    await this.initialize();
+    
+    return this.collection.aggregate([
+      { $match: { coins: coinSymbol } },
+      { $group: { 
+        _id: '$username', 
+        count: { $sum: 1 },
+        positiveTweets: { 
+          $sum: { $cond: [{ $eq: ['$sentiment', 'positive'] }, 1, 0] } 
+        },
+        negativeTweets: { 
+          $sum: { $cond: [{ $eq: ['$sentiment', 'negative'] }, 1, 0] } 
+        }
+      }},
+      { $sort: { count: -1 } },
+      { $limit: limit }
+    ]).toArray();
+  }
+
+  /**
+   * Lấy top hashtags liên quan đến một coin cụ thể
+   */
+  async getRelatedHashtagsForCoin(coinSymbol, limit = 10) {
+    await this.initialize();
+    
+    return this.collection.aggregate([
+      { $match: { coins: coinSymbol } },
+      { $unwind: '$hashtags' },
+      { $match: { hashtags: { $ne: coinSymbol.toLowerCase() } } }, // Loại bỏ hashtag trùng với tên coin
+      { $group: { _id: '$hashtags', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: limit }
+    ]).toArray();
+  }
+
+  /**
+   * Lấy tweets gần đây nhất về một coin cụ thể
+   */
+  async getRecentTweetsForCoin(coinSymbol, limit = 10) {
+    await this.initialize();
+    
+    return this.collection.find({ coins: coinSymbol })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
+  }
+
   async close() {
     if (this.client) {
       await this.client.close();
@@ -210,4 +298,4 @@ class Tweet {
   }
 }
 
-module.exports = new Tweet(); 
+module.exports = new Tweet();

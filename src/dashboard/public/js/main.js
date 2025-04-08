@@ -307,113 +307,113 @@ function initCryptoChartWidget() {
 }
 
 // Hàm cập nhật dữ liệu biểu đồ
-function updateChartData(coin) {
-    if (!cryptoChartWidget || !cryptoData[coin]) return;
+// function updateChartData(coin) {
+//     if (!cryptoChartWidget || !cryptoData[coin]) return;
     
-    const data = cryptoData[coin].prices;
-    const showMA = document.getElementById('showMA')?.checked ?? true;
-    const showEMA = document.getElementById('showEMA')?.checked ?? true;
-    const showVolume = document.getElementById('showVolume')?.checked ?? true;
+//     const data = cryptoData[coin].prices;
+//     const showMA = document.getElementById('showMA')?.checked ?? true;
+//     const showEMA = document.getElementById('showEMA')?.checked ?? true;
+//     const showVolume = document.getElementById('showVolume')?.checked ?? true;
     
-    // Xóa dữ liệu cũ
-    cryptoChartWidget.data.datasets = [];
+//     // Xóa dữ liệu cũ
+//     cryptoChartWidget.data.datasets = [];
     
-    // Thêm dữ liệu nến
-    cryptoChartWidget.data.datasets.push({
-        label: `${coin} Price`,
-        data: data.map(d => ({
-            x: d.time,
-            o: d.open,
-            h: d.high,
-            l: d.low,
-            c: d.close
-        })),
-        type: 'candlestick',
-        candleStick: {
-            color: {
-                up: 'rgba(75, 192, 192, 1)',
-                down: 'rgba(255, 99, 132, 1)',
-                unchanged: 'rgba(90, 90, 90, 1)',
-            }
-        }
-    });
+//     // Thêm dữ liệu nến
+//     cryptoChartWidget.data.datasets.push({
+//         label: `${coin} Price`,
+//         data: data.map(d => ({
+//             x: d.time,
+//             o: d.open,
+//             h: d.high,
+//             l: d.low,
+//             c: d.close
+//         })),
+//         type: 'candlestick',
+//         candleStick: {
+//             color: {
+//                 up: 'rgba(75, 192, 192, 1)',
+//                 down: 'rgba(255, 99, 132, 1)',
+//                 unchanged: 'rgba(90, 90, 90, 1)',
+//             }
+//         }
+//     });
     
-    // Thêm đường MA nếu được chọn
-    if (showMA) {
-        const ma7 = calculateMA(data, 7);
-        const ma25 = calculateMA(data, 25);
+//     // Thêm đường MA nếu được chọn
+//     if (showMA) {
+//         const ma7 = calculateMA(data, 7);
+//         const ma25 = calculateMA(data, 25);
         
-        cryptoChartWidget.data.datasets.push({
-            label: 'MA(7)',
-            data: ma7.map((value, index) => ({ x: data[index]?.time, y: value })),
-            borderColor: 'rgba(255, 159, 64, 1)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.1,
-            pointRadius: 0,
-            type: 'line',
-            yAxisID: 'y'
-        });
+//         cryptoChartWidget.data.datasets.push({
+//             label: 'MA(7)',
+//             data: ma7.map((value, index) => ({ x: data[index]?.time, y: value })),
+//             borderColor: 'rgba(255, 159, 64, 1)',
+//             borderWidth: 2,
+//             fill: false,
+//             tension: 0.1,
+//             pointRadius: 0,
+//             type: 'line',
+//             yAxisID: 'y'
+//         });
         
-        cryptoChartWidget.data.datasets.push({
-            label: 'MA(25)',
-            data: ma25.map((value, index) => ({ x: data[index]?.time, y: value })),
-            borderColor: 'rgba(153, 102, 255, 1)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.1,
-            pointRadius: 0,
-            type: 'line',
-            yAxisID: 'y'
-        });
-    }
+//         cryptoChartWidget.data.datasets.push({
+//             label: 'MA(25)',
+//             data: ma25.map((value, index) => ({ x: data[index]?.time, y: value })),
+//             borderColor: 'rgba(153, 102, 255, 1)',
+//             borderWidth: 2,
+//             fill: false,
+//             tension: 0.1,
+//             pointRadius: 0,
+//             type: 'line',
+//             yAxisID: 'y'
+//         });
+//     }
     
-    // Thêm đường EMA nếu được chọn
-    if (showEMA) {
-        const ema7 = calculateEMA(data, 7);
-        const ema25 = calculateEMA(data, 25);
+//     // Thêm đường EMA nếu được chọn
+//     if (showEMA) {
+//         const ema7 = calculateEMA(data, 7);
+//         const ema25 = calculateEMA(data, 25);
         
-        cryptoChartWidget.data.datasets.push({
-            label: 'EMA(7)',
-            data: ema7.map((value, index) => ({ x: data[index]?.time, y: value })),
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.1,
-            pointRadius: 0,
-            type: 'line',
-            borderDash: [5, 5],
-            yAxisID: 'y'
-        });
+//         cryptoChartWidget.data.datasets.push({
+//             label: 'EMA(7)',
+//             data: ema7.map((value, index) => ({ x: data[index]?.time, y: value })),
+//             borderColor: 'rgba(54, 162, 235, 1)',
+//             borderWidth: 2,
+//             fill: false,
+//             tension: 0.1,
+//             pointRadius: 0,
+//             type: 'line',
+//             borderDash: [5, 5],
+//             yAxisID: 'y'
+//         });
         
-        cryptoChartWidget.data.datasets.push({
-            label: 'EMA(25)',
-            data: ema25.map((value, index) => ({ x: data[index]?.time, y: value })),
-            borderColor: 'rgba(255, 206, 86, 1)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.1,
-            pointRadius: 0,
-            type: 'line',
-            borderDash: [5, 5],
-            yAxisID: 'y'
-        });
-    }
+//         cryptoChartWidget.data.datasets.push({
+//             label: 'EMA(25)',
+//             data: ema25.map((value, index) => ({ x: data[index]?.time, y: value })),
+//             borderColor: 'rgba(255, 206, 86, 1)',
+//             borderWidth: 2,
+//             fill: false,
+//             tension: 0.1,
+//             pointRadius: 0,
+//             type: 'line',
+//             borderDash: [5, 5],
+//             yAxisID: 'y'
+//         });
+//     }
     
-    // Thêm khối lượng nếu được chọn
-    if (showVolume && cryptoData[coin].volumes) {
-        cryptoChartWidget.data.datasets.push({
-            label: 'Volume',
-            data: cryptoData[coin].volumes.map((value, index) => ({ x: data[index]?.time, y: value })),
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            type: 'bar',
-            yAxisID: 'volume'
-        });
-    }
+//     // Thêm khối lượng nếu được chọn
+//     if (showVolume && cryptoData[coin].volumes) {
+//         cryptoChartWidget.data.datasets.push({
+//             label: 'Volume',
+//             data: cryptoData[coin].volumes.map((value, index) => ({ x: data[index]?.time, y: value })),
+//             backgroundColor: 'rgba(75, 192, 192, 0.2)',
+//             type: 'bar',
+//             yAxisID: 'volume'
+//         });
+//     }
     
-    // Cập nhật biểu đồ
-    cryptoChartWidget.update();
-}
+//     // Cập nhật biểu đồ
+//     cryptoChartWidget.update();
+// }
 
 // Hàm tải bảng giá
 function loadCryptoPrices() {

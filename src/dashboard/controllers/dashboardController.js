@@ -431,3 +431,246 @@ function generateCoinPriceData(min, max, days) {
   
   return data;
 }
+
+// Hiển thị trang phân tích chi tiết cho một coin cụ thể
+exports.getCoinAnalysis = async (req, res) => {
+  try {
+    const coin = req.params.coin.toUpperCase();
+    await Tweet.initialize();
+    
+    // Lấy dữ liệu phân tích cho coin trong 30 ngày qua
+    const last30Days = [...Array(30)].map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      return d.toISOString().split('T')[0];
+    }).reverse();
+    
+    // --- Lấy dữ liệu về coin ---
+    
+    // 1. Số lượng tweets về coin theo ngày
+    const coinTweetsByDay = await Tweet.getCoinMentionTrend(coin, 30);
+    
+    // Map dữ liệu theo ngày vào mảng
+    const dailyMentionsData = {
+      labels: last30Days.map(date => new Date(date).toLocaleDateString('vi-VN')),
+      data: last30Days.map(date => {
+        const found = coinTweetsByDay.find(item => item._id.split('T')[0] === date);
+        return found ? found.count : 0;
+      })
+    };
+    
+    // 2. Phân tích sentiment của coin theo ngày
+    const coinSentimentByDay = await Tweet.getCoinSentimentTrend(coin, 30);
+    
+    const sentimentData = {
+      positive: last30Days.map(date => {
+        const found = coinSentimentByDay.find(item => 
+          item._id.split('T')[0] === date && item.sentiment === 'positive'
+        );
+        return found ? found.count : 0;
+      }),
+      negative: last30Days.map(date => {
+        const found = coinSentimentByDay.find(item => 
+          item._id.split('T')[0] === date && item.sentiment === 'negative'
+        );
+        return found ? found.count : 0;
+      }),
+      neutral: last30Days.map(date => {
+        const found = coinSentimentByDay.find(item => 
+          item._id.split('T')[0] === date && 
+          (item.sentiment === 'neutral' || !item.sentiment)
+        );
+        return found ? found.count : 0;
+      })
+    };
+    
+    // Tính chỉ số sentiment của coin
+    const totalPositive = sentimentData.positive.reduce((a, b) => a + b, 0);
+    const totalNegative = sentimentData.negative.reduce((a, b) => a + b, 0);
+    const totalNeutral = sentimentData.neutral.reduce((a, b) => a + b, 0);
+    const total = totalPositive + totalNegative + totalNeutral;
+    
+    // Chỉ số cảm xúc coin (coin sentiment)
+    let coinSentiment = 50; // Giá trị mặc định
+    if (total > 0) {
+      // Áp dụng công thức tính điểm sentiment
+      coinSentiment = Math.round(((totalPositive * 1.2 - totalNegative * 1.1) / (total * 1.1)) * 50 + 50);
+    }
+    
+    // Giới hạn trong khoảng 0-100
+    coinSentiment = Math.max(0, Math.min(100, coinSentiment));
+    
+    let coinSentimentStatus = 'Trung lập';
+    let coinSentimentClass = 'text-warning';
+    
+    // Phân loại cảm xúc
+    if (coinSentiment >= 75) {
+      coinSentimentStatus = 'Rất tích cực';
+      coinSentimentClass = 'text-success';
+    } else if (coinSentiment >= 60) {
+      coinSentimentStatus = 'Tích cực';
+      coinSentimentClass = 'text-success';
+    } else if (coinSentiment >= 55) {
+      coinSentimentStatus = 'Hơi tích cực';
+      coinSentimentClass = 'text-success';
+    } else if (coinSentiment >= 45) {
+      coinSentimentStatus = 'Trung lập';
+      coinSentimentClass = 'text-warning';
+    } else if (coinSentiment >= 40) {
+      coinSentimentStatus = 'Hơi tiêu cực';
+      coinSentimentClass = 'text-danger';
+    } else if (coinSentiment >= 25) {
+      coinSentimentStatus = 'Tiêu cực';
+      coinSentimentClass = 'text-danger';
+    } else {
+      coinSentimentStatus = 'Rất tiêu cực';
+      coinSentimentClass = 'text-danger';
+    }
+    
+    // 3. Top tài khoản đề cập nhiều nhất về coin
+    const topInfluencers = await Tweet.getTopAccountsForCoin(coin, 10);
+    
+    // 4. Top hashtags liên quan đến coin
+    const relatedHashtags = await Tweet.getRelatedHashtagsForCoin(coin, 10);
+    
+    // 5. Lấy giá coin (giả lập)
+    const priceRange = getPriceRange(coin);
+    const coinPriceData = generateCoinPriceData(priceRange.min, priceRange.max, 30);
+    
+    // 6. Phân tích xu hướng giá
+    const priceData = coinPriceData.map(d => d.close);
+    const priceChange = {
+      day: calculatePercentChange(priceData, 1),
+      week: calculatePercentChange(priceData, 7),
+      month: calculatePercentChange(priceData, 30),
+    };
+    
+    // 7. So sánh giá với sentiment
+    const priceChanges = last30Days.map((_, i) => {
+      if (i === 0) return 0;
+      const previousPrice = coinPriceData[i-1]?.close || 0;
+      const currentPrice = coinPriceData[i]?.close || 0;
+      if (previousPrice === 0) return 0;
+      return ((currentPrice - previousPrice) / previousPrice) * 100;
+    });
+    
+    // 8. Tính chỉ số tương quan giữa sentiment và giá
+    const sentimentValues = last30Days.map((date, i) => {
+      const positive = sentimentData.positive[i] || 0;
+      const negative = sentimentData.negative[i] || 0;
+      const neutral = sentimentData.neutral[i] || 0;
+      const total = positive + negative + neutral;
+      if (total === 0) return 50;
+      return ((positive - negative) / total) * 50 + 50;
+    });
+    
+    const correlation = calculateCorrelation(sentimentValues.slice(1), priceChanges.slice(1));
+    
+    // 9. Lấy 10 tweets gần đây nhất về coin
+    const recentTweets = await Tweet.getRecentTweetsForCoin(coin, 10);
+    
+    // 10. Đề xuất giao dịch dựa trên sentiment và xu hướng
+    let tradingSuggestion = 'HOLD';
+    let tradingSuggestionReason = 'Thị trường ổn định, chưa có tín hiệu rõ ràng.';
+    let tradingSignalClass = 'text-warning';
+    
+    // Phân tích tín hiệu dựa trên sentiment và xu hướng giá
+    if (coinSentiment >= 70 && priceChange.week > 0) {
+      tradingSuggestion = 'BUY';
+      tradingSuggestionReason = 'Sentiment tích cực mạnh và xu hướng giá tăng.';
+      tradingSignalClass = 'text-success';
+    } else if (coinSentiment <= 30 && priceChange.week < 0) {
+      tradingSuggestion = 'SELL';
+      tradingSuggestionReason = 'Sentiment tiêu cực và xu hướng giá giảm.';
+      tradingSignalClass = 'text-danger';
+    } else if (coinSentiment >= 60 && priceChange.day < 0) {
+      tradingSuggestion = 'BUY DIP';
+      tradingSuggestionReason = 'Sentiment tích cực nhưng giá giảm ngắn hạn, có thể là cơ hội mua.';
+      tradingSignalClass = 'text-primary';
+    } else if (coinSentiment <= 40 && priceChange.day > 5) {
+      tradingSuggestion = 'TAKE PROFIT';
+      tradingSuggestionReason = 'Sentiment đang tiêu cực nhưng giá tăng mạnh, có thể chốt lời.';
+      tradingSignalClass = 'text-danger';
+    }
+
+    // Render trang phân tích coin
+    res.render('coin-analysis', {
+      title: `Phân tích ${coin}`,
+      coin: coin,
+      dailyMentionsData,
+      sentimentData,
+      coinSentiment,
+      coinSentimentStatus,
+      coinSentimentClass,
+      topInfluencers,
+      relatedHashtags,
+      coinPriceData,
+      priceChange,
+      correlation,
+      recentTweets,
+      tradingSuggestion,
+      tradingSuggestionReason,
+      tradingSignalClass,
+      moment
+    });
+  } catch (error) {
+    console.error(`Lỗi khi tải trang phân tích coin ${req.params.coin}:`, error);
+    res.status(500).render('error', {
+      title: 'Lỗi server',
+      error: 'Không thể tải dữ liệu phân tích coin.'
+    });
+  }
+};
+
+// Hàm tính % thay đổi
+function calculatePercentChange(data, period) {
+  if (!data || data.length < period || data[data.length - period] === 0) {
+    return 0;
+  }
+  return ((data[data.length - 1] - data[data.length - period - 1]) / data[data.length - period - 1]) * 100;
+}
+
+// Hàm tính hệ số tương quan Pearson
+function calculateCorrelation(x, y) {
+  if (x.length !== y.length || x.length === 0) {
+    return 0;
+  }
+  
+  const n = x.length;
+  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+  
+  for (let i = 0; i < n; i++) {
+    sumX += x[i];
+    sumY += y[i];
+    sumXY += x[i] * y[i];
+    sumX2 += x[i] * x[i];
+    sumY2 += y[i] * y[i];
+  }
+  
+  const numerator = n * sumXY - sumX * sumY;
+  const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+  
+  if (denominator === 0) {
+    return 0;
+  }
+  
+  return numerator / denominator;
+}
+
+// Giá mặc định cho một số coin phổ biến
+function getPriceRange(coin) {
+  const ranges = {
+    BTC: { min: 50000, max: 65000 },
+    ETH: { min: 2800, max: 3500 },
+    BNB: { min: 350, max: 450 },
+    SOL: { min: 100, max: 150 },
+    XRP: { min: 0.5, max: 0.7 },
+    ADA: { min: 0.3, max: 0.5 },
+    DOT: { min: 5, max: 7 },
+    DOGE: { min: 0.08, max: 0.12 },
+    SHIB: { min: 0.00001, max: 0.00002 },
+    AVAX: { min: 25, max: 35 }
+  };
+  
+  return ranges[coin] || { min: 10, max: 100 };
+}

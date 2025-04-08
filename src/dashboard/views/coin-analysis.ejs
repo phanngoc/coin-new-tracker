@@ -1,0 +1,371 @@
+<%- include('layouts/header', { title }) %>
+
+<div class="container-fluid mt-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h1 class="mb-3"><%= coin %> <small class="text-muted">Phân tích chi tiết</small></h1>
+      <p class="lead">Phân tích xu hướng và cảm xúc thị trường về đồng <%= coin %> từ dữ liệu Twitter trong 30 ngày qua.</p>
+    </div>
+    <div class="col-md-4 text-end">
+      <a href="/analytics" class="btn btn-outline-primary me-2">
+        <i class="fas fa-chart-line"></i> Phân tích chung
+      </a>
+      <a href="/coin/<%= coin %>" class="btn btn-outline-secondary">
+        <i class="fab fa-twitter"></i> Xem Tweets
+      </a>
+    </div>
+  </div>
+
+  <!-- Overview Cards -->
+  <div class="row mb-4">
+    <!-- Sentiment Score -->
+    <div class="col-md-3 mb-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Chỉ số cảm xúc</h5>
+          <div class="text-center my-3">
+            <div class="sentiment-gauge">
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-success" role="progressbar" style="width: <%= coinSentiment %>%"></div>
+              </div>
+              <h2 class="mt-3 <%= coinSentimentClass %>"><%= coinSentiment %>/100</h2>
+              <p class="<%= coinSentimentClass %> fw-bold"><%= coinSentimentStatus %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Price Changes -->
+    <div class="col-md-3 mb-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Biến động giá</h5>
+          <div class="d-flex flex-column mt-2">
+            <div class="d-flex justify-content-between">
+              <span>24 giờ:</span>
+              <span class="<%= priceChange.day > 0 ? 'text-success' : (priceChange.day < 0 ? 'text-danger' : 'text-muted') %>">
+                <%= priceChange.day.toFixed(2) %>%
+                <i class="fas <%= priceChange.day > 0 ? 'fa-arrow-up' : (priceChange.day < 0 ? 'fa-arrow-down' : 'fa-minus') %>"></i>
+              </span>
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+              <span>7 ngày:</span>
+              <span class="<%= priceChange.week > 0 ? 'text-success' : (priceChange.week < 0 ? 'text-danger' : 'text-muted') %>">
+                <%= priceChange.week.toFixed(2) %>%
+                <i class="fas <%= priceChange.week > 0 ? 'fa-arrow-up' : (priceChange.week < 0 ? 'fa-arrow-down' : 'fa-minus') %>"></i>
+              </span>
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+              <span>30 ngày:</span>
+              <span class="<%= priceChange.month > 0 ? 'text-success' : (priceChange.month < 0 ? 'text-danger' : 'text-muted') %>">
+                <%= priceChange.month.toFixed(2) %>%
+                <i class="fas <%= priceChange.month > 0 ? 'fa-arrow-up' : (priceChange.month < 0 ? 'fa-arrow-down' : 'fa-minus') %>"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trading Signal -->
+    <div class="col-md-3 mb-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Tín hiệu giao dịch</h5>
+          <div class="text-center my-3">
+            <h2 class="<%= tradingSignalClass %>"><%= tradingSuggestion %></h2>
+            <p class="small text-muted"><%= tradingSuggestionReason %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sentiment-Price Correlation -->
+    <div class="col-md-3 mb-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Tương quan cảm xúc-giá</h5>
+          <div class="text-center my-3">
+            <h2><%= (correlation * 100).toFixed(1) %>%</h2>
+            <p class="small text-muted">
+              <% if (Math.abs(correlation) > 0.7) { %>
+                Tương quan rất mạnh
+              <% } else if (Math.abs(correlation) > 0.5) { %>
+                Tương quan mạnh
+              <% } else if (Math.abs(correlation) > 0.3) { %>
+                Tương quan trung bình
+              <% } else if (Math.abs(correlation) > 0.1) { %>
+                Tương quan yếu
+              <% } else { %>
+                Không có tương quan
+              <% } %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="row">
+    <!-- Charts Section -->
+    <div class="col-lg-8 mb-4">
+      <!-- Price Chart -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+          <h5 class="card-title mb-0">Biểu đồ giá <%= coin %> (30 ngày)</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="priceChart" height="300"></canvas>
+        </div>
+      </div>
+
+      <!-- Mentions Chart -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+          <h5 class="card-title mb-0">Số lượng đề cập trên Twitter (30 ngày)</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="mentionsChart" height="250"></canvas>
+        </div>
+      </div>
+
+      <!-- Sentiment Chart -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+          <h5 class="card-title mb-0">Cảm xúc về <%= coin %> trên Twitter</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="sentimentChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="col-lg-4 mb-4">
+      <!-- Top Influencers -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+          <h5 class="card-title mb-0">Top tài khoản đề cập <%= coin %></h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            <% topInfluencers.forEach((account, index) => { %>
+              <a href="/account/<%= account._id %>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-0">@<%= account._id %></h6>
+                  <small class="text-muted">
+                    <span class="text-success"><i class="fas fa-arrow-up"></i> <%= account.positiveTweets %></span> / 
+                    <span class="text-danger"><i class="fas fa-arrow-down"></i> <%= account.negativeTweets %></span>
+                  </small>
+                </div>
+                <span class="badge bg-primary rounded-pill"><%= account.count %></span>
+              </a>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Related Hashtags -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+          <h5 class="card-title mb-0">Hashtags liên quan</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-wrap">
+            <% relatedHashtags.forEach(hashtag => { %>
+              <a href="/hashtag/<%= hashtag._id %>" class="badge bg-light text-dark text-decoration-none m-1 p-2">
+                #<%= hashtag._id %> <span class="text-muted"><%= hashtag.count %></span>
+              </a>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Tweets -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0">
+          <h5 class="card-title mb-0">Tweets gần đây về <%= coin %></h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            <% recentTweets.forEach(tweet => { %>
+              <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between mb-1">
+                  <a href="/account/<%= tweet.username %>" class="fw-bold text-decoration-none">@<%= tweet.username %></a>
+                  <small class="text-muted"><%= moment(tweet.createdAt).fromNow() %></small>
+                </div>
+                <p class="mb-1"><%= tweet.text %></p>
+                <small class="text-muted">
+                  <span class="badge bg-<%= tweet.sentiment === 'positive' ? 'success' : (tweet.sentiment === 'negative' ? 'danger' : 'secondary') %>">
+                    <%= tweet.sentiment === 'positive' ? 'Tích cực' : (tweet.sentiment === 'negative' ? 'Tiêu cực' : 'Trung lập') %>
+                  </span>
+                </small>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+        <div class="card-footer bg-white border-0">
+          <a href="/coin/<%= coin %>" class="btn btn-outline-primary btn-sm w-100">
+            Xem tất cả Tweets về <%= coin %>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Dữ liệu price chart
+    const priceData = <%- JSON.stringify(coinPriceData) %>;
+    const dates = priceData.map(item => new Date(item.time).toLocaleDateString('vi-VN'));
+    const prices = priceData.map(item => item.close);
+    
+    // Chart Price
+    new Chart(document.getElementById('priceChart'), {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [{
+          label: 'Giá <%= coin %> (USD)',
+          data: prices,
+          borderColor: '#3B82F6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 3,
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          tooltip: {
+            mode: 'index',
+            intersect: false
+          },
+          legend: {
+            display: true,
+            position: 'top',
+          }
+        },
+        scales: {
+          x: {
+            display: true,
+            title: {
+              display: false
+            },
+            ticks: {
+              maxTicksLimit: 10
+            }
+          },
+          y: {
+            display: true,
+            title: {
+              display: false
+            }
+          }
+        }
+      }
+    });
+    
+    // Chart Mentions
+    new Chart(document.getElementById('mentionsChart'), {
+      type: 'bar',
+      data: {
+        labels: <%- JSON.stringify(dailyMentionsData.labels) %>,
+        datasets: [{
+          label: 'Số lượt đề cập',
+          data: <%- JSON.stringify(dailyMentionsData.data) %>,
+          backgroundColor: 'rgba(16, 185, 129, 0.7)',
+          borderColor: 'rgb(16, 185, 129)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          x: {
+            ticks: {
+              maxTicksLimit: 10
+            }
+          },
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+    
+    // Chart Sentiment
+    new Chart(document.getElementById('sentimentChart'), {
+      type: 'line',
+      data: {
+        labels: <%- JSON.stringify(dailyMentionsData.labels) %>,
+        datasets: [
+          {
+            label: 'Tích cực',
+            data: <%- JSON.stringify(sentimentData.positive) %>,
+            backgroundColor: 'rgba(16, 185, 129, 0.2)',
+            borderColor: 'rgb(16, 185, 129)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 2
+          },
+          {
+            label: 'Tiêu cực',
+            data: <%- JSON.stringify(sentimentData.negative) %>,
+            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+            borderColor: 'rgb(239, 68, 68)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 2
+          },
+          {
+            label: 'Trung lập',
+            data: <%- JSON.stringify(sentimentData.neutral) %>,
+            backgroundColor: 'rgba(107, 114, 128, 0.2)',
+            borderColor: 'rgb(107, 114, 128)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 2
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          tooltip: {
+            mode: 'index',
+            intersect: false
+          }
+        },
+        scales: {
+          x: {
+            ticks: {
+              maxTicksLimit: 10
+            }
+          },
+          y: {
+            beginAtZero: true,
+            stacked: true
+          }
+        }
+      }
+    });
+  });
+</script>
+
+<%- include('layouts/footer') %>
